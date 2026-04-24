@@ -7,6 +7,7 @@ A Linux sandbox that limits what coding agents can do during development.
 
 Restricts file system access with Landlock, filters syscalls with seccomp, and proxies network traffic so agents only reach what you allow.
 
+> [!IMPORTANT]
 > **Pre-1.0.0:** CLI flags, policy file formats, and configuration schemas may change in breaking ways between releases.
 
 ## Documentation
