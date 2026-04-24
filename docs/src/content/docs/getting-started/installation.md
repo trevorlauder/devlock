@@ -43,12 +43,6 @@ cargo build --release
 
 The binary lands at `target/release/devlock`. Copy it onto your `PATH` or invoke it with the full path.
 
-Running straight from the workspace with Cargo also works.
-
-```sh
-cargo run --release -- --agent claude
-```
-
 ## Runtime directories
 
 Two directories get created at startup if they do not already exist.
