@@ -1,0 +1,32 @@
+# Profile for security testing. Not for normal use.
+
+---
+extends: default.yaml
+
+includes:
+  - partials/devcontainer.yaml
+  - partials/git.yaml
+  - partials/github.yaml
+  - partials/homebrew.yaml
+  - partials/mise.yaml
+  - partials/rust.yaml
+  - partials/vscode.yaml
+
+network_allowlist:
+  - "*.crates.io"
+  - "*.githubusercontent.com"
+  - "*.pkg.github.com"
+  - api.github.com
+  - auth.docker.io
+  - codeload.github.com
+  - crates.io
+  - docs.rs
+  - doh-rebind-test.trevorlauder.dev
+  - files.pythonhosted.org
+  - github.com
+  - objects.githubusercontent.com
+  - proxy.golang.org
+  - pypi.org
+  - registry-1.docker.io
+  - registry.npmjs.org
+  - sum.golang.org

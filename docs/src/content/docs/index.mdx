@@ -1,0 +1,46 @@
+---
+title: devlock
+description: A Linux sandbox for running coding agents safely during development.
+template: splash
+hero:
+  tagline: A Linux sandbox for running coding agents safely during development.
+  actions:
+    - text: Install devlock
+      link: /devlock/getting-started/installation/
+      icon: right-arrow
+    - text: How it works
+      link: /devlock/guides/architecture/
+      icon: open-book
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+:::caution[Pre-1.0.0]
+CLI flags, policy file formats, and configuration schemas may change in breaking ways between releases.
+:::
+
+## What devlock is
+
+devlock runs a coding agent inside a Linux sandbox built for local development. The agent sees only the project you point it at, cannot reach the network except through a proxy you control, and never gets your real API credentials. You configure it with two YAML files. One describes the agent, one describes what the sandbox lets through.
+
+## Start here
+
+<CardGrid stagger>
+	<Card title="Install devlock" icon="rocket">
+		Check the kernel and tools you need, then build from source.
+		[Installation](/devlock/getting-started/installation/)
+	</Card>
+	<Card title="Run your first session" icon="seti:bash">
+		Launch Claude Code inside the sandbox and see what logs get produced.
+		[Quickstart](/devlock/getting-started/quickstart/)
+	</Card>
+	<Card title="Understand the design" icon="setting">
+		See how the file system, network, and credential layers fit together.
+		[Architecture](/devlock/guides/architecture/)
+	</Card>
+	<Card title="Write a custom agent" icon="pencil">
+		Point devlock at a new binary with its own allowlist and credentials.
+		[Custom agents](/devlock/guides/custom-agents/)
+	</Card>
+</CardGrid>

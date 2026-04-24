@@ -1,0 +1,9 @@
+---
+paths:
+  read_exec:
+    - "~/.cargo"
+    - "~/.rustup"
+
+env:
+  CARGO_HOME: "~/.cargo"
+  RUSTUP_HOME: "~/.rustup"

@@ -1,0 +1,110 @@
+# Base filesystem policy. Agent overlays extend these lists.
+# Vars: $CWD, $TMP_DIR. Missing paths are dropped at apply.
+#
+# Landlock is a kernel filesystem sandbox and the main line of
+# filesystem protection. It applies the access lists at the
+# kernel level and checks every access at the inode, with no
+# race between a path check and the actual access. Its one
+# limit is that access only adds up. A rule can grant more
+# access to a path, but it cannot take access back from a
+# parent path that already grants it.
+#
+# The seccomp supervisor runs in the parent process and adds
+# defense in depth on top of Landlock. It checks the syscalls
+# routed to it by the seccomp filter, which covers opens,
+# writes, exec, bind, connect, and process creation, and blocks
+# the action when it would violate policy. The supervisor reads
+# the path from the child's memory and the kernel reads it
+# again to act, so the two can race. That race is why the
+# supervisor is not the main filesystem boundary. For a path
+# Landlock already allows or denies, a slip in the supervisor
+# does not cross the kernel's decision.
+#
+# The read_only bucket is also the only layer that can protect
+# a specific path that sits inside a broader Landlock write
+# grant, for example a config file inside a full_access $CWD.
+# Landlock has to allow those paths because of the parent grant
+# and it cannot narrow them. The supervisor refuses writes,
+# unlink, rename-over, link-to, symlink-at, and O_CREAT at the
+# listed path. This is best-effort: subject to the same TOCTOU
+# race between the supervisor's read and the kernel's read as
+# every other seccomp-notify path check, so a racing child can
+# swap the target between the two reads. Use it for paths whose
+# modification has real security impact (e.g. .git/config,
+# .git/hooks, settings files with hook/exec fields) and accept
+# the best-effort guarantee.
+#
+# Entries on the read_only list remain readable. Any secret
+# readable there is readable by the agent.
+#
+#   full_access  Read, write, create, delete, run programs.
+#   read_exec    Read files, run programs.
+#   read_only    Read the listed files. The supervisor also refuses
+#                writes, unlink, rename that replaces the target, and
+#                new hardlink or symlink created at these paths.
+#                Landlock alone cannot enforce immutability because
+#                access is additive and a dir_create parent propagates
+#                RemoveFile and MakeReg down to children. The supervisor
+#                applies the stricter interpretation. Best-effort due
+#                to the seccomp-notify TOCTOU race.
+#   rw           Read, write, create, delete.
+#   dir_create   Add new entries at this path. Covers mkdir and touch.
+#                Does NOT grant delete: unlink, rmdir, rename-over, and
+#                rename-out all return EPERM from the supervisor, even
+#                though Landlock's RemoveFile bit propagates down. Use
+#                rw or full_access if the agent needs to delete entries.
+#                Also does not grant WriteFile or Truncate, so a content
+#                write to a file under a dir_create subtree returns
+#                EACCES at open, even on a file the agent just created.
+
+---
+paths:
+  full_access:
+    - "$CWD"
+    - /dev/null
+    - /dev/urandom
+    - /dev/tty
+    - /dev/pts
+    - "$TMP_DIR"
+  read_exec:
+    - /usr
+  # /proc is needed for runtime reads (e.g. /proc/self/maps, /proc/cpuinfo).
+  # Landlock cannot scope /proc per PID.
+  # seccomp proc_mount_leak blocks /proc/<other_pid>/{mountinfo,mounts,mountstats}.
+  read_list:
+    - /proc
+  read_only:
+    - /etc/gitconfig
+    - /etc/passwd
+    - /etc/group
+    - /etc/nsswitch.conf
+    - /etc/hosts
+    - /etc/resolv.conf
+    - /etc/profile
+    - /etc/bash.bashrc
+    - /etc/terminfo
+    - /etc/ssl
+    - /etc/ld.so.cache
+    - /etc/ld.so.conf
+    - /etc/ld.so.conf.d
+    - /etc/zsh
+    - /etc/shells
+    - /etc/os-release
+    - /etc/services
+    - /etc/host.conf
+    - /etc/machine-id
+    - /etc/gitattributes
+    - /var/lib/dbus/machine-id
+    - /sys/devices/system/cpu
+    - /sys/fs/cgroup
+  read_write: []
+  dir_create: []
+
+path_prepend:
+  - /usr/local/bin
+  - /usr/bin
+  - /bin
+
+env:
+  TMPPREFIX: "$TMP_DIR/zsh"
+  PYTHONDONTWRITEBYTECODE: "1"

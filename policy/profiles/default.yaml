@@ -1,0 +1,6 @@
+---
+includes:
+  - base.yaml
+  - partials/git.yaml
+  - partials/devcontainer.yaml
+  - partials/vscode.yaml

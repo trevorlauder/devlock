@@ -1,0 +1,50 @@
+[package]
+name = "devlock"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "devlock"
+path = "src/main.rs"
+
+[[bin]]
+name = "sandbox-test-runner"
+path = "tests/bin/sandbox_test_runner.rs"
+
+[[bin]]
+name = "escape-probe"
+path = "tests/bin/escape_probe.rs"
+
+[[bin]]
+name = "proxy-escape-probe"
+path = "tests/bin/proxy_escape_probe.rs"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+dirs = "6.0.0"
+getrandom = "0.4"
+hex = "0.4"
+http-body-util = "0.1"
+hyper = { version = "1", features = ["server", "http1"] }
+hyper-rustls = { version = "0.27", features = ["http1", "ring", "native-tokio"] }
+hyper-util = { version = "0.1", features = ["tokio", "client-legacy"] }
+include_dir = "0.7"
+landlock = "0.4.4"
+libc = "0.2"
+libseccomp = "0.4"
+nix = { version = "0.31.2", features = ["sched", "mount", "user", "process", "signal", "socket", "fs", "ioctl"] }
+rustls = "0.23"
+serde = { version = "1", features = ["derive"] }
+signal-hook = "0.4"
+serde_json = "1"
+serde_norway = "0.9"
+subtle = "2"
+tempfile = "3"
+thiserror = "2"
+tokio = { version = "1", features = ["rt-multi-thread", "net", "signal", "io-util", "macros"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
+urlencoding = "2.1.3"
+which = "8.0.2"
+zeroize = "1"

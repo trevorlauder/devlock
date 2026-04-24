@@ -1,0 +1,14 @@
+---
+paths:
+  # Protect the specific .git entries that would give a host-side git
+  # invocation a path to code execution: .git/config (can set aliases
+  # or core.sshCommand that fire later when the user runs git) and
+  # .git/hooks (post-commit, pre-push, etc. run on the host). Leave the
+  # rest of .git writable so host-side git operations and the agent's
+  # own staging (git add, commit) do not fight the supervisor. The
+  # supervisor refuses write, unlink, rename-over, and new link/symlink
+  # at these paths; best-effort due to the seccomp-notify TOCTOU race.
+  read_only:
+    - "~/.gitconfig"
+    - "$CWD/.git/config"
+    - "$CWD/.git/hooks"

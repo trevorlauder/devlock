@@ -1,0 +1,22 @@
+# Integration test agent. Runs whatever $DEVLOCK_PROBE_BIN points at.
+
+---
+executable: "$DEVLOCK_PROBE_BIN"
+
+credentials:
+  format: test_stub
+
+network_allowlist: []
+
+proxy:
+  api_base_url: https://api.test.invalid
+
+env: {}
+
+agent_args: []
+
+paths:
+  full_access: []
+  read_write: []
+  read_only: []
+  dir_create: []

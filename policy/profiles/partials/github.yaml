@@ -1,0 +1,4 @@
+---
+paths:
+  read_only:
+    - "~/.config/gh/config.yml"

@@ -1,0 +1,384 @@
+# Deny by default. Everything not listed returns EACCES.
+# Each rule has an action (allow or notify) and optional when clause.
+
+supervisor:
+  # clone3 flags the supervisor permits. Any bit outside this mask
+  # rejects the call (deny by default for flags the kernel may add).
+  clone3_allowed_flags: CLONE_SAFE_MASK
+
+rules:
+  - { syscall: brk, action: allow }
+  - { syscall: mmap, action: allow }
+  - { syscall: munmap, action: allow }
+  # execveat on a memfd is already refused by exec_request. The fd link
+  # resolves inside /proc to a name no allowed_exec root can cover.
+  - { syscall: memfd_create, action: allow }
+  - { syscall: mprotect, action: allow }
+  - { syscall: mremap, action: allow }
+  - { syscall: madvise, action: allow }
+  - { syscall: mincore, action: allow }
+  - { syscall: msync, action: allow }
+  - { syscall: mlock, action: allow }
+  - { syscall: mlock2, action: allow }
+  - { syscall: munlock, action: allow }
+  - { syscall: mlockall, action: allow }
+  - { syscall: munlockall, action: allow }
+  - { syscall: membarrier, action: allow }
+
+  - { syscall: exit, action: allow }
+  - { syscall: exit_group, action: allow }
+  - { syscall: wait4, action: allow }
+  - { syscall: waitid, action: allow }
+  - { syscall: getpid, action: allow }
+  - { syscall: getppid, action: allow }
+  - { syscall: gettid, action: allow }
+  - { syscall: getsid, action: allow }
+  - { syscall: getpgrp, action: allow }
+  - { syscall: getpgid, action: allow }
+  - { syscall: setpgid, action: allow }
+  - { syscall: setsid, action: allow }
+  - { syscall: getrusage, action: allow }
+  - { syscall: sched_yield, action: allow }
+  - { syscall: sched_getaffinity, action: allow }
+  - { syscall: sched_setaffinity, action: allow }
+  - { syscall: sched_getscheduler, action: allow }
+  - { syscall: sched_setscheduler, action: allow }
+  - { syscall: sched_getparam, action: allow }
+  - { syscall: sched_setparam, action: allow }
+  - { syscall: sched_setattr, action: allow }
+  - { syscall: sched_get_priority_max, action: allow }
+  - { syscall: sched_get_priority_min, action: allow }
+  - { syscall: setpriority, action: allow }
+  - { syscall: rseq, action: allow }
+  - { syscall: set_tid_address, action: allow }
+  - { syscall: set_robust_list, action: allow }
+  - { syscall: get_robust_list, action: allow }
+  - { syscall: arch_prctl, action: allow }
+
+  - { syscall: read, action: allow }
+  - { syscall: pread64, action: allow }
+  - { syscall: readv, action: allow }
+  - { syscall: preadv, action: allow }
+  - { syscall: preadv2, action: allow }
+  - { syscall: write, action: allow }
+  - { syscall: pwrite64, action: allow }
+  - { syscall: writev, action: allow }
+  - { syscall: pwritev, action: allow }
+  - { syscall: pwritev2, action: allow }
+  - { syscall: close, action: allow }
+  - { syscall: close_range, action: allow }
+  - { syscall: lseek, action: allow }
+  - { syscall: _llseek, action: allow }
+  # fstat/fstatfs operate on an already open fd. The fd's inode is
+  # whatever Landlock already let the child open, so there is no new
+  # information leak; allow them unconditionally.
+  - { syscall: fstat, action: allow }
+  - { syscall: fstatfs, action: allow }
+  # Path-based stat needs supervisor gating: Landlock does not expose
+  # a "stat" access bit, so without this the child could probe
+  # arbitrary paths and learn of their existence, size, and ownership
+  # even for paths outside every bucket.
+  - { syscall: newfstatat, action: notify, handler: stat_request }
+  - { syscall: statx, action: notify, handler: stat_request }
+  - { syscall: statfs, action: notify, handler: stat_request }
+  - { syscall: fdatasync, action: allow }
+  - { syscall: fsync, action: allow }
+  - { syscall: sync_file_range, action: allow }
+  - { syscall: sendfile, action: allow }
+  - { syscall: copy_file_range, action: allow }
+  - { syscall: splice, action: allow }
+  - { syscall: tee, action: allow }
+  - { syscall: fadvise64, action: allow }
+  - { syscall: fallocate, action: allow }
+  - { syscall: ftruncate, action: allow }
+
+  - { syscall: getcwd, action: allow }
+  - { syscall: chdir, action: allow }
+  - { syscall: fchdir, action: allow }
+  # faccessat/faccessat2 need the same gate as newfstatat/statx: without
+  # it the child can distinguish "ENOENT" from "EACCES" on arbitrary
+  # paths and map out files it cannot see.
+  - { syscall: faccessat, action: notify, handler: stat_request }
+  - { syscall: faccessat2, action: notify, handler: stat_request }
+  - { syscall: readlinkat, action: allow }
+  - { syscall: getdents, action: allow }
+  - { syscall: getdents64, action: allow }
+
+  - { syscall: rt_sigaction, action: allow }
+  - { syscall: rt_sigprocmask, action: allow }
+  - { syscall: rt_sigreturn, action: allow }
+  - { syscall: rt_sigpending, action: allow }
+  - { syscall: rt_sigsuspend, action: allow }
+  - { syscall: rt_sigqueueinfo, action: allow }
+  - { syscall: rt_sigtimedwait, action: allow }
+  - { syscall: rt_tgsigqueueinfo, action: allow }
+  - { syscall: sigaltstack, action: allow }
+  - { syscall: kill, action: notify, handler: signal_request }
+  - { syscall: tgkill, action: notify, handler: signal_request }
+  - { syscall: tkill, action: notify, handler: signal_request }
+  - { syscall: pause, action: allow }
+
+  - { syscall: futex, action: allow }
+  - { syscall: futex_waitv, action: allow }
+
+  - { syscall: clock_gettime, action: allow }
+  - { syscall: clock_getres, action: allow }
+  - { syscall: clock_nanosleep, action: allow }
+  - { syscall: nanosleep, action: allow }
+  - { syscall: gettimeofday, action: allow }
+  - { syscall: time, action: allow }
+  - { syscall: times, action: allow }
+  - { syscall: getrandom, action: allow }
+  # POSIX timers. Used by threading.Timer, py-spy, perf, glibc
+  # SIGEV_THREAD. Harmless without timer_settime delivering signals
+  # to arbitrary pids, which the kernel already restricts.
+  - { syscall: timer_create, action: allow }
+  - { syscall: timer_settime, action: allow }
+  - { syscall: timer_gettime, action: allow }
+  - { syscall: timer_getoverrun, action: allow }
+  - { syscall: timer_delete, action: allow }
+
+  - { syscall: getuid, action: allow }
+  - { syscall: geteuid, action: allow }
+  - { syscall: getgid, action: allow }
+  - { syscall: getegid, action: allow }
+  - { syscall: getgroups, action: allow }
+  - { syscall: getresuid, action: allow }
+  - { syscall: getresgid, action: allow }
+  - { syscall: umask, action: allow }
+  - { syscall: uname, action: allow }
+  - { syscall: sysinfo, action: allow }
+  - { syscall: getrlimit, action: allow }
+  - { syscall: prlimit64, action: allow }
+  - { syscall: capget, action: allow }
+
+  - { syscall: dup, action: allow }
+  - { syscall: dup2, action: allow }
+  - { syscall: dup3, action: allow }
+  - { syscall: pipe, action: allow }
+  - { syscall: pipe2, action: allow }
+  - { syscall: fcntl, action: allow }
+  - { syscall: flock, action: allow }
+  - { syscall: select, action: allow }
+  - { syscall: pselect6, action: allow }
+  - { syscall: poll, action: allow }
+  - { syscall: ppoll, action: allow }
+  - { syscall: epoll_create1, action: allow }
+  - { syscall: epoll_ctl, action: allow }
+  - { syscall: epoll_wait, action: allow }
+  - { syscall: epoll_pwait, action: allow }
+  - { syscall: epoll_pwait2, action: allow }
+  - { syscall: eventfd, action: allow }
+  - { syscall: eventfd2, action: allow }
+  - { syscall: signalfd, action: allow }
+  - { syscall: signalfd4, action: allow }
+  - { syscall: timerfd_create, action: allow }
+  - { syscall: timerfd_settime, action: allow }
+  - { syscall: timerfd_gettime, action: allow }
+  - { syscall: inotify_init1, action: allow }
+  # Gated like faccessat. Without supervision the kernel returns EACCES
+  # for denied existing paths and ENOENT for missing ones, an existence
+  # oracle on read_list trees.
+  - { syscall: inotify_add_watch, action: notify, handler: stat_request }
+  - { syscall: inotify_rm_watch, action: allow }
+
+  - { syscall: listen, action: allow }
+  - { syscall: accept, action: allow }
+  - { syscall: accept4, action: allow }
+  - { syscall: getsockname, action: allow }
+  - { syscall: getpeername, action: allow }
+  - { syscall: getsockopt, action: allow }
+  - { syscall: setsockopt, action: allow }
+  - { syscall: shutdown, action: allow }
+  - { syscall: sendto, action: allow }
+  - { syscall: sendmsg, action: allow }
+  - { syscall: sendmmsg, action: allow }
+  - { syscall: recvfrom, action: allow }
+  - { syscall: recvmsg, action: allow }
+  - { syscall: recvmmsg, action: allow }
+  - { syscall: socketpair, action: allow }
+
+  # clone: allow only when no namespace flag is set.
+  - syscall: clone
+    action: allow
+    when:
+      - { arg: 0, op: masked_eq, mask: CLONE_NS_MASK, value: 0 }
+
+  # ioctl: only the cmds the agent and its tools legitimately need.
+  - syscall: ioctl
+    action: allow
+    when: [{ arg: 1, op: masked_eq, mask: 0xffffffff, value: FIONREAD }]
+  - syscall: ioctl
+    action: allow
+    when: [{ arg: 1, op: masked_eq, mask: 0xffffffff, value: FIONBIO }]
+  - syscall: ioctl
+    action: allow
+    when: [{ arg: 1, op: masked_eq, mask: 0xffffffff, value: FIOCLEX }]
+  - syscall: ioctl
+    action: allow
+    when: [{ arg: 1, op: masked_eq, mask: 0xffffffff, value: FIONCLEX }]
+  - syscall: ioctl
+    action: allow
+    when: [{ arg: 1, op: masked_eq, mask: 0xffffffff, value: TCGETS }]
+  - syscall: ioctl
+    action: allow
+    when: [{ arg: 1, op: masked_eq, mask: 0xffffffff, value: TCSETS }]
+  - syscall: ioctl
+    action: allow
+    when: [{ arg: 1, op: masked_eq, mask: 0xffffffff, value: TCSETSW }]
+  - syscall: ioctl
+    action: allow
+    when: [{ arg: 1, op: masked_eq, mask: 0xffffffff, value: TCSETSF }]
+  - syscall: ioctl
+    action: allow
+    when: [{ arg: 1, op: masked_eq, mask: 0xffffffff, value: TIOCGPTN }]
+  - syscall: ioctl
+    action: allow
+    when: [{ arg: 1, op: masked_eq, mask: 0xffffffff, value: TIOCGWINSZ }]
+  - syscall: ioctl
+    action: allow
+    when: [{ arg: 1, op: masked_eq, mask: 0xffffffff, value: TIOCSWINSZ }]
+  - syscall: ioctl
+    action: allow
+    when: [{ arg: 1, op: masked_eq, mask: 0xffffffff, value: TIOCGPGRP }]
+  - syscall: ioctl
+    action: allow
+    when: [{ arg: 1, op: masked_eq, mask: 0xffffffff, value: TIOCSPGRP }]
+  - syscall: ioctl
+    action: allow
+    when: [{ arg: 1, op: masked_eq, mask: 0xffffffff, value: TIOCGSID }]
+  # Reflink ioctls. Both fds already passed open_request, so reflink
+  # cannot reach inodes outside the agent's read+write buckets.
+  - syscall: ioctl
+    action: allow
+    when: [{ arg: 1, op: masked_eq, mask: 0xffffffff, value: FICLONE }]
+  - syscall: ioctl
+    action: allow
+    when: [{ arg: 1, op: masked_eq, mask: 0xffffffff, value: FICLONERANGE }]
+  - syscall: ioctl
+    action: allow
+    when: [{ arg: 1, op: masked_eq, mask: 0xffffffff, value: FIDEDUPERANGE }]
+
+  # ptrace: only self-debug (PTRACE_TRACEME, op 0) so tools like gdb --args
+  # and rr record work. All other ops (ATTACH, PEEK/POKE, SYSCALL) deny.
+  - syscall: ptrace
+    action: allow
+    when: [{ arg: 0, op: eq, value: 0 }]
+
+  # prctl: only the options the agent and its tools legitimately need.
+  - syscall: prctl
+    action: allow
+    when: [{ arg: 0, op: eq, value: PR_SET_NAME }]
+  - syscall: prctl
+    action: allow
+    when: [{ arg: 0, op: eq, value: PR_GET_NAME }]
+  - syscall: prctl
+    action: allow
+    when: [{ arg: 0, op: eq, value: PR_SET_NO_NEW_PRIVS }]
+  - syscall: prctl
+    action: allow
+    when: [{ arg: 0, op: eq, value: PR_GET_DUMPABLE }]
+  - syscall: prctl
+    action: allow
+    when: [{ arg: 0, op: eq, value: PR_SET_DUMPABLE }]
+  - syscall: prctl
+    action: allow
+    when: [{ arg: 0, op: eq, value: PR_SET_PDEATHSIG }]
+  - syscall: prctl
+    action: allow
+    when: [{ arg: 0, op: eq, value: PR_GET_PDEATHSIG }]
+  - syscall: prctl
+    action: allow
+    when: [{ arg: 0, op: eq, value: PR_CAPBSET_READ }]
+
+  # Supervisor inspects these at call time. Handler names select the
+  # Rust function that reads args and decides allow or deny.
+  - { syscall: openat, action: notify, handler: open_request }
+  - { syscall: openat2, action: notify, handler: open_request }
+  - { syscall: unlinkat, action: notify, handler: structural_write }
+  - { syscall: mkdirat, action: notify, handler: structural_write }
+  - { syscall: renameat, action: notify, handler: structural_write }
+  - { syscall: renameat2, action: notify, handler: structural_write }
+  - { syscall: linkat, action: notify, handler: structural_write }
+  - { syscall: symlinkat, action: notify, handler: structural_write }
+  # Legacy (non-*at) structural syscalls. Some archs expose both the *at
+  # and the legacy form; without notify entries here a caller on x86_64 can
+  # dodge the supervisor by calling unlink(2) instead of unlinkat(2).
+  - { syscall: unlink, action: notify, handler: structural_write }
+  - { syscall: rmdir, action: notify, handler: structural_write }
+  - { syscall: mkdir, action: notify, handler: structural_write }
+  - { syscall: rename, action: notify, handler: structural_write }
+  - { syscall: link, action: notify, handler: structural_write }
+  - { syscall: symlink, action: notify, handler: structural_write }
+  - { syscall: truncate, action: notify, handler: path_write }
+  - { syscall: fchmod, action: notify, handler: fd_write }
+  - { syscall: fchown, action: notify, handler: fd_write }
+  - { syscall: fchmodat, action: notify, handler: dirfd_write }
+  - { syscall: fchownat, action: notify, handler: dirfd_write }
+  - { syscall: utimensat, action: notify, handler: dirfd_write }
+  - { syscall: mknodat, action: notify, handler: dirfd_write }
+  # Legacy (non-*at) inode-attribute mutators. Like the structural legacy
+  # entries above, these are pure path_write routes that some archs still
+  # expose alongside the *at forms.
+  - { syscall: chmod, action: notify, handler: path_write }
+  - { syscall: chown, action: notify, handler: path_write }
+  - { syscall: lchown, action: notify, handler: path_write }
+  - { syscall: utimes, action: notify, handler: path_write }
+  - { syscall: utime, action: notify, handler: path_write }
+  - { syscall: mknod, action: notify, handler: path_write }
+  # name_to_handle_at is intentionally omitted. The default EACCES deny
+  # covers it, and we do not want to route it through open_request because
+  # its signature differs and open_by_handle_at (the consumer) is also
+  # already denied by default.
+  - { syscall: setxattr, action: notify, handler: path_write }
+  - { syscall: lsetxattr, action: notify, handler: path_write }
+  - { syscall: removexattr, action: notify, handler: path_write }
+  - { syscall: lremovexattr, action: notify, handler: path_write }
+  # fd-variant xattr mutators: resolve fd to path then enforce
+  # write policy, same pattern as fchmod/fchown. Without these,
+  # an attacker can open(O_PATH) a protected file and bypass the
+  # path-based xattr check.
+  - { syscall: fsetxattr, action: notify, handler: fd_write }
+  - { syscall: fremovexattr, action: notify, handler: fd_write }
+  - { syscall: fgetxattr, action: allow }
+  - { syscall: getxattr, action: allow }
+  - { syscall: lgetxattr, action: allow }
+  - { syscall: listxattr, action: allow }
+  - { syscall: llistxattr, action: allow }
+  - { syscall: flistxattr, action: allow }
+  - { syscall: execve, action: notify, handler: exec_request }
+  - { syscall: execveat, action: notify, handler: exec_request }
+  - { syscall: bind, action: notify, handler: bind_request }
+  - { syscall: connect, action: notify, handler: connect_request }
+  - { syscall: clone3, action: notify, handler: clone3_request }
+
+  # socket: allow only AF_UNSPEC, AF_UNIX, and stream on AF_INET[6].
+  - syscall: socket
+    action: allow
+    when: [{ arg: 0, op: eq, value: AF_UNSPEC }]
+  - syscall: socket
+    action: allow
+    when: [{ arg: 0, op: eq, value: AF_UNIX }]
+  - syscall: socket
+    action: allow
+    when:
+      - { arg: 0, op: eq, value: AF_INET }
+      - { arg: 1, op: masked_eq, mask: SOCK_TYPE_MASK, value: SOCK_STREAM }
+  - syscall: socket
+    action: allow
+    when:
+      - { arg: 0, op: eq, value: AF_INET6 }
+      - { arg: 1, op: masked_eq, mask: SOCK_TYPE_MASK, value: SOCK_STREAM }
+
+  # Syscalls that would be catastrophic if ever reached. The default
+  # deny is EACCES, which reads as "permission denied on some object".
+  # For these calls the kernel's traditional errno is EPERM ("operation
+  # not permitted"), which accurately says the operation itself is
+  # forbidden, not that a capability on some argument is missing.
+  - { syscall: reboot, action: deny, errno: EPERM }
+  - { syscall: init_module, action: deny, errno: EPERM }
+  - { syscall: finit_module, action: deny, errno: EPERM }
+  - { syscall: delete_module, action: deny, errno: EPERM }
+  - { syscall: create_module, action: deny, errno: EPERM }
+  - { syscall: kexec_load, action: deny, errno: EPERM }
+  - { syscall: kexec_file_load, action: deny, errno: EPERM }

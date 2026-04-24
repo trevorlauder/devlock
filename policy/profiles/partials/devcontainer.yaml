@@ -1,0 +1,10 @@
+---
+paths:
+  # devcontainer.json fields like initializeCommand and postCreateCommand
+  # execute on the host (outside the sandbox) when the container is
+  # (re)opened. A writable .devcontainer directory is a path to host
+  # code execution that survives a sandbox rebuild. The supervisor
+  # refuses write, unlink, rename-over, and new link or symlink under
+  # this path. Best-effort due to the seccomp-notify TOCTOU race.
+  read_only:
+    - "$CWD/.devcontainer"

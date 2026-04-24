@@ -1,0 +1,15 @@
+---
+paths:
+  read_exec:
+    - "~/.local/share/mise/installs"
+    - "~/.local/share/mise/shims"
+  read_list:
+    - "~/.config/mise"
+  read_write:
+    - "~/.cache/mise"
+
+path_prepend:
+  - "~/.local/share/mise/shims"
+
+env:
+  MISE_SHELL: zsh

@@ -1,0 +1,14 @@
+---
+paths:
+  read_exec:
+    - /home/linuxbrew/.linuxbrew
+
+path_prepend:
+  - /home/linuxbrew/.linuxbrew/bin
+  - /home/linuxbrew/.linuxbrew/sbin
+
+env:
+  HOMEBREW_PREFIX: /home/linuxbrew/.linuxbrew
+  HOMEBREW_CELLAR: /home/linuxbrew/.linuxbrew/Cellar
+  HOMEBREW_REPOSITORY: /home/linuxbrew/.linuxbrew/Homebrew
+  HOMEBREW_NO_ENV_HINTS: "1"

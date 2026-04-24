@@ -1,0 +1,6 @@
+---
+paths:
+  read_only:
+    # Treat the whole workspace VS Code config directory as immutable,
+    # since changes here can trigger host-side execution paths.
+    - "$CWD/.vscode"

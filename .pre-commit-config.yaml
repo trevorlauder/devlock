@@ -1,0 +1,65 @@
+---
+fail_fast: true
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-shebang-scripts-are-executable
+      - id: check-symlinks
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args:
+          - --allow-multiple-documents
+      - id: check-xml
+      - id: destroyed-symlinks
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args:
+          - --fix=lf
+      - id: check-added-large-files
+  - repo: local
+    hooks:
+      - id: dprint
+        name: dprint
+        language: system
+        entry: dprint fmt
+        pass_filenames: false
+      - id: actionlint
+        name: actionlint
+        language: system
+        entry: actionlint
+        pass_filenames: false
+      - id: zizmor
+        name: zizmor
+        language: system
+        entry: zizmor --persona auditor
+        files: \.github/workflows/
+        types: [yaml]
+      - id: trufflehog
+        name: trufflehog
+        language: system
+        entry: trufflehog git file://. --only-verified --fail
+        pass_filenames: false
+      - id: cargo-fmt
+        name: cargo fmt
+        language: system
+        entry: cargo fmt
+        pass_filenames: false
+      - id: cargo-clippy
+        name: cargo clippy
+        language: system
+        entry: cargo clippy --all-targets --all-features -- -D warnings
+        pass_filenames: false
+      - id: cargo-test
+        name: cargo test
+        language: system
+        entry: cargo test
+        pass_filenames: false
+      - id: cargo-audit
+        name: cargo audit
+        language: system
+        entry: cargo audit
+        pass_filenames: false

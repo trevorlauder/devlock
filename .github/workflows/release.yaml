@@ -1,0 +1,77 @@
+name: Release
+
+permissions:
+  contents: read
+
+on:
+  push:
+    tags:
+      - "v*"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-test:
+    name: Build and test (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x86_64
+            runner: ubuntu-latest
+          - arch: aarch64
+            runner: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Install libseccomp headers
+        run: sudo apt-get update && sudo apt-get install -y libseccomp-dev
+      - uses: jdx/mise-action@1648a7812b9aeae629881980618f079932869151 # v4.0.1
+        with:
+          install: true
+          cache: false
+          experimental: true
+      - name: Run tests
+        run: cargo test
+      - name: Build release binary
+        run: cargo build --release --bin devlock
+      - name: Stage binary
+        env:
+          ARCH: ${{ matrix.arch }}
+        run: cp target/release/devlock "devlock-linux-$ARCH"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: devlock-linux-${{ matrix.arch }}
+          path: devlock-linux-${{ matrix.arch }}
+          if-no-files-found: error
+
+  release:
+    name: Create release
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create GitHub releases and upload assets
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: devlock-linux-x86_64
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: devlock-linux-aarch64
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG" \
+            --title "$TAG" \
+            --generate-notes \
+            devlock-linux-x86_64 \
+            devlock-linux-aarch64
