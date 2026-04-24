@@ -3,7 +3,7 @@
 [![CI](https://github.com/trevorlauder/devlock/actions/workflows/ci.yaml/badge.svg)](https://github.com/trevorlauder/devlock/actions/workflows/ci.yaml)
 [![Release](https://github.com/trevorlauder/devlock/actions/workflows/release.yaml/badge.svg)](https://github.com/trevorlauder/devlock/actions/workflows/release.yaml)
 
-A Linux sandbox for running coding agents safely during development.
+A Linux sandbox that limits what coding agents can do during development.
 
 Restricts file system access with Landlock, filters syscalls with seccomp, and proxies network traffic so agents only reach what you allow.
 
